@@ -7,7 +7,7 @@ export default function Main() {
   return (
     <>
     <Navbar />
-    <div className="mx-32 ">
+    <div className="mx-32 overflow-x-hidden ">
         <Home/>
     </div>
 
