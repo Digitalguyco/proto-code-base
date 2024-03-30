@@ -3,6 +3,7 @@ import React from "react";
 import Logo from '../../../public/logo.svg';
 import pencil from '../../../public/pencil-edit-02.svg';
 import Image from "next/image";
+import Link from 'next/link';
 
 const Navbar = () => {
     return (
@@ -18,10 +19,10 @@ const Navbar = () => {
             <div className="text-sky-950 text-lg font-normal font-['Montserrat'] tracking-tight">Spotlight</div>
             <div className="text-sky-950 text-lg font-normal font-['Montserrat'] tracking-tight">Contact Us</div>
         </div>
-        <div className="justify-start items-center gap-2.5 flex">
+        <Link href='/write' className="justify-start items-center gap-2.5 flex">
             <Image className="w-[30px] h-[30px] relative"  width={30} height={30} src={pencil} alt='pencil'/>
             <div className="text-sky-950 text-lg font-normal font-['Montserrat'] tracking-tight">Write</div>
-        </div>
+        </Link>
     </nav>
     );
   };
