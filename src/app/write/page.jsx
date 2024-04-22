@@ -1,159 +1,94 @@
 "use client";
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from "next/image";
-import Logo from '../../../public/logo.svg';
-import { createEditor } from 'slate';
-import { Slate, Editable, withReact } from 'slate-react';
 import { Transforms } from 'slate';
-import { useRouter } from "next/router";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from '../../../firebase/config'
 import Link from 'next/link';
 
-// Define a custom element for images
-const ImageElement = ({ attributes, children, element }) => {
-    return (
-      <div {...attributes}>
-        <div contentEditable={false}>
-          <Image
-            src={element.url}
-            alt={element.alt}
-            style={{ display: 'block', maxWidth: '100%', maxHeight: '20em' }}
-          />
-        </div>
-        {children}
-      </div>
-    );
-  };
 
-  // Function to insert an image with file upload
-const insertImage = async (editor, file) => {
-    // Assuming you have a function to handle image uploads
-    const url = await uploadImage(file);
-    if (url) {
-      const text = { text: '' };
-      const image = { type: 'image', url, children: [text] };
-      Transforms.insertNodes(editor, image);
-    }
-  };
-  
-  // Function to handle image uploads
-  const uploadImage = async (file) => {
-    // Assuming you have a function to upload the file to your server or cloud storage
-    try {
-      // Example: Upload file to Firebase Storage
-      const storageRef = ref(storage, `images/${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-  
-      await uploadTask;
-      const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-      return downloadURL;
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      return null;
-    }
-  };
 
-  // Example toolbar component
-const Toolbar = ({ editor }) => {
-    // Function to insert an image
-    const insertImage = (url) => {
-      const text = { text: '' };
-      const image = { type: 'image', url, children: [text] };
-      Transforms.insertNodes(editor, image);
-    };
-    const inputRef = useRef(null);
-  
-    // Function to toggle text formatting
-    const toggleFormat = (format) => {
-      const isActive = CustomEditor.isFormatActive(editor, format);
-      SlateTransforms.setNodes(
-        editor,
-        { [format]: isActive ? null : true },
-        { match: n => Text.isText(n), split: true }
-      );
-    };
-  
-    return (
-      <div>
-        <button onMouseDown={(event) => {
-          event.preventDefault(); // Prevent losing focus
-          toggleFormat('bold');
-        }}>Bold</button>
-        {/* Additional buttons for italic, underline, etc. */}
-        <button onMouseDown={(event) => {
-                event.preventDefault();
-                // Trigger file input click
-                inputRef.current.click();
-                }}>Insert Image</button>
-                <input
-                type="file"
-                accept="image/*"
-                ref={inputRef}
-                style={{ display: 'none' }}
-                onChange={(event) => {
-                    const file = event.target.files[0];
-                    if (file) insertImage(editor, file);
-                    // Clear the file input
-                    event.target.value = null;
-                }}
-                />
-      </div>
-    );
-  };
+
+
 
 const WritePage = () => {
-    // const router = useRouter();
-    const [editor] = useState(() => withReact(createEditor()))
+
+  const [open, setOpen] = useState(false);
+  const [file, setFile] = useState(null);
+  const [media, setMedia] = useState("");
+  const [value, setValue] = useState("");
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState([
-    {
-      type: 'paragraph',
-      children: [{ text: 'Tell your story...' }],
-    },
-  ]);
+  const [status, setStatus] = useState("draft");
+  const [catSlug, setCatSlug] = useState("");
+  
   const [addButton, setAddButton] = useState(false);
 
+  useEffect(() => {
 
-  // Function to render elements
-  const renderElement = useCallback(props => {
-    switch (props.element.type) {
-      case 'image':
-        return <ImageElement {...props} />;
-      default:
-        return <p {...props.attributes}>{props.children}</p>;
-    }
-  }, []);
+    const upload = () => {
+      const name = new Date().getTime() + file.name;
+      const storageRef = ref(storage, name);
 
-  const generateSlug = (title) => title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+      const uploadTask = uploadBytesResumable(storageRef, file);
 
-  const extractHeaderImage = (htmlContent) => {
-    const matches = htmlContent.match(/<img.*?src="([^"]*)"/);
-    return matches?.[1] || "";
-  };
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log("Upload is " + progress + "% done");
+          switch (snapshot.state) {
+            case "paused":
+              console.log("Upload is paused");
+              break;
+            case "running":
+              console.log("Upload is running");
+              break;
+          }
+        },
+        (error) => {},
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            setMedia(downloadURL);
+          });
+        }
+      );
+    };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const slug = generateSlug(title);
-    const headerImage = extractHeaderImage(content);
+    file && upload();
+  }, [file]);
 
-    try {
-      await addDoc(collection(db, "posts"), {
+  const slugify = (str) =>
+    str
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+  const handleSubmit = async () => {
+    const res = await fetch("/api/posts", {
+      method: "POST",
+      body: JSON.stringify({
         title,
-        content,
-        slug,
-        headerImage,
-        createdAt: new Date(),
-        status: "draft"
-      });
-      alert("Post added successfully");
-      setTitle("");
-      setContent("");
-    } catch (error) {
-      console.error("Error adding document: ", error);
-      alert(`Failed to add the post because of ${error}`);
+        desc: value,
+        img: media,
+        slug: slugify(title),
+        catSlug: catSlug || "style", //If not selected, choose the general category
+        status: status,
+      }),
+    });
+
+    if (res.status === 200) {
+      const data = await res.json();
+      router.push('/');
     }
   };
+
+
+
+
+
 
   return (
     <>
@@ -170,6 +105,7 @@ const WritePage = () => {
             type="text"
             className=" outline-sky-950 bg-transparent placeholder:text-neutral-400 placeholder:text-[30px] text-[32px] text-[#001F3F] font-medium font-montserrat tracking-tight w-full h-[100px]  px-[38px]    py-[33px] rounded-[20px] border border-neutral-400 justify-start items-center flex"
             placeholder="Title"
+            onChange={(e) => setTitle(e.target.value)}
           />
 
           <div className="w-full outline-sky-950 flex h-[428px] mt-6 p-[40px]  rounded-[20px] border gap-[10px] border-neutral-400 justify-start">
@@ -188,9 +124,17 @@ const WritePage = () => {
                 />
               </svg>
             )}
-            {addButton ? (
+            {addButton && (
               <div className="flex gap-[25px] ml-[10px] h-[36px] justify-between items-center">
-                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+               
+                <input
+              type="file"
+              id="image"
+              onChange={(e) => setFile(e.target.files[0])}
+              style={{ display: "none" }}
+            />
+             <label htmlFor="image">
+             <svg  width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="0.5" y="0.5" width="35" height="35" rx="17.5" stroke="#2ECC71" />
                   <path d="M15 16C15.5523 16 16 15.5523 16 15C16 14.4477 15.5523 14 15 14C14.4477 14 14 14.4477 14 15C14 15.5523 14.4477 16 15 16Z" stroke="#2ECC71" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                   <path
@@ -200,6 +144,7 @@ const WritePage = () => {
                   />
                   <path d="M13.3333 23.9999C16.2482 20.5167 19.516 15.9227 24.3316 19.0283" stroke="#2ECC71" stroke-width="1.5" />
                 </svg>
+              </label>
                 <svg className=" cursor-pointer" onClick={() => setAddButton(false)} width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="0.5" y="0.5" width="35" height="35" rx="17.5" stroke="#2ECC71" />
                   <path d="M20 24.0007H16" stroke="#2ECC71" stroke-linecap="round" stroke-linejoin="round" />
@@ -210,13 +155,16 @@ const WritePage = () => {
                   />
                 </svg>
               </div>
-            ) : (
-              <textarea className=" bg-transparent w-full h-full outline-none text-[24px] placeholder:text-[24px] font-montserrat font-normal  " placeholder="Tell your story........"></textarea>
-            )}
+            ) 
+            }
+              
+
+              <textarea className="mt-12 bg-transparent w-full h-full outline-none text-[24px] placeholder:text-[24px] font-montserrat font-normal  " placeholder="Tell your story........"></textarea>
+
           </div>
 
-          <div className=" flex justify-end">
-            <div className="text-neutral-100 text-xl font-medium font-montserrat leading-[25px] w-[229px] mt-4 h-[45px] px-[30px] py-2.5 bg-green-500 bg-opacity-30 rounded-[20px]  gap-2.5 self-center tracking-tight">Share Your Story</div>
+          <div className=" flex justify-end" >
+            <button onClick={()=> handleSubmit()} className="text-neutral-100 text-xl font-medium font-montserrat leading-[25px] w-[229px] mt-4 h-[45px] px-[30px] py-2.5 bg-green-500 bg-opacity-30 rounded-[20px]  gap-2.5 self-center tracking-tight">Share Your Story</button>
           </div>
         </div>
       </div>
