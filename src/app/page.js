@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-key */
 'use client';
 import Image from "next/image";
 import Navbar from "./components/NavBar";
@@ -6,6 +7,16 @@ import Home from "./blog/Home";
 import { useRef } from "react";
 import Section from "./utils/Section";
 import TopArticles from "./components/TopArticle";
+import Individuals from "./components/Individuals";
+import Innovation from "./components/Innovation";
+import Culture from "./components/Culture";
+import Explore from "./components/Explore";
+import AboutUs from "./components/AboutUs";
+import Trending from "./components/Trending";
+import People from "./components/Poeple";
+import Business from "./components/Business";
+import Inn from "./components/Inn";
+import Place from "./components/Place";
 
 
 
@@ -69,9 +80,20 @@ export default function Main() {
       </div>
       {/* Space Nav Page */}
       <div className="w-full    mt-12  flex-col justify-start items-center flex">
-      <Section>{[<TopArticles />]}</Section>
-        
+      <Section>{[<TopArticles />, <Trending />, <People />, <Business />, <Inn />, <Place />]}</Section>
+      <div className="w-full   flex-col justify-start items-center flex" ref={spotlight}>
+          <Individuals />
+        </div>
+        <div className="w-full   flex-col justify-start items-center flex" ref={stories}>
+          <Innovation />
+        </div>
+        <Culture />
+        <Explore />
+        <div className="w-full   flex-col justify-start items-center flex" ref={about}>
+          <AboutUs />
+        </div>
       </div>
+      
 
     <Footer />
     </>
