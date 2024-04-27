@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Navbar from "./components/NavBar";
 import Footer from "./components/Footer";
-import Home from "./blog/Home";
 import { useRef } from "react";
 import Section from "./utils/Section";
 import TopArticles from "./components/TopArticle";
