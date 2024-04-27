@@ -1,0 +1,8 @@
+await setDoc(doc(db, "posts", slugify(title) ),{
+            title: title,
+            desc: value,
+            img: media,
+            slug: slugify(title),
+            catSlug: catSlug || "style", //If not selected, choose the general category
+            status: status,
+          });

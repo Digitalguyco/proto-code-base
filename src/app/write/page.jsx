@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from "next/image";
-import { Transforms } from 'slate';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { storage } from '../../../firebase/config'
+import { storage, db } from '../../../firebase/config';
+import { collection, query, where, doc, setDoc, getDocs } from "firebase/firestore"; 
+import { useRouter } from "next/navigation";
 import Link from 'next/link';
-
 
 
 
@@ -13,13 +13,16 @@ import Link from 'next/link';
 
 const WritePage = () => {
 
+  const router = useRouter();
+
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState(null);
-  const [media, setMedia] = useState("");
+  const [media, setMedia] = useState("test.com");
   const [value, setValue] = useState("");
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState("draft");
   const [catSlug, setCatSlug] = useState("");
+  // const [isButtonDisabled, setIsButtonDisabled] = useState(true)
   
   const [addButton, setAddButton] = useState(false);
 
@@ -45,11 +48,19 @@ const WritePage = () => {
               console.log("Upload is running");
               break;
           }
+          console.log("Upload is " + progress + "% done")
+          
         },
-        (error) => {},
+        (error) => {
+          console.log(error);
+        },
         () => {
           getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            
             setMedia(downloadURL);
+
+            
+            
           });
         }
       );
@@ -66,23 +77,48 @@ const WritePage = () => {
       .replace(/[\s_-]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
-  const handleSubmit = async () => {
-    const res = await fetch("/api/posts", {
-      method: "POST",
-      body: JSON.stringify({
-        title,
-        desc: value,
-        img: media,
-        slug: slugify(title),
-        catSlug: catSlug || "style", //If not selected, choose the general category
-        status: status,
-      }),
-    });
+      const handleSubmit = async () => {
+        try {
+            // Check if a document with the same title already exists
+            const querySnapshot = await getDocs(query(collection(db, "posts"), where("title", "==", title)));
+    
+            if (!querySnapshot.empty) {
+                // Handle case where document with the same title already exists
+                alert("A post with the same title already exists. Please choose a different title.");
+                return; // Exit the function to prevent further execution
+            }
+    
+            await setDoc(doc(db, "posts", slugify(title) ),{
+              title: title,
+              desc: value,
+              img: media,
+              slug: slugify(title),
+              catSlug: catSlug || "style", //If not selected, choose the general category
+              status: status,
+            });
+    
+            //  clear form
+            setTitle('');
+            setValue('');
+            setMedia('');
+            setFile(null);
+    
+            // Redirect or perform any other actions after successful submission
+            alert('Posted SuccessFully 🎉')
+            router.push('/');
+        } catch (error) {
+            console.error("Error adding document: ", error);
+            // Handle errors appropriately (e.g., show an alert)
+            alert("Error submitting post. Please try again later.");
+        }
+    };
 
-    if (res.status === 200) {
-      const data = await res.json();
-      router.push('/');
-    }
+  const handleButtonDisabled = () =>{
+      if (value.length > 3 && title.length > 3){
+        return false
+      }else{
+      return true 
+      };
   };
 
 
@@ -106,6 +142,7 @@ const WritePage = () => {
             className=" outline-sky-950 bg-transparent placeholder:text-neutral-400 placeholder:text-[30px] text-[32px] text-[#001F3F] font-medium font-montserrat tracking-tight w-full h-[100px]  px-[38px]    py-[33px] rounded-[20px] border border-neutral-400 justify-start items-center flex"
             placeholder="Title"
             onChange={(e) => setTitle(e.target.value)}
+            value={title}
           />
 
           <div className="w-full outline-sky-950 flex h-[428px] mt-6 p-[40px]  rounded-[20px] border gap-[10px] border-neutral-400 justify-start">
@@ -124,15 +161,16 @@ const WritePage = () => {
                 />
               </svg>
             )}
-            {addButton && (
-              <div className="flex gap-[25px] ml-[10px] h-[36px] justify-between items-center">
-               
-                <input
+               <input
               type="file"
               id="image"
               onChange={(e) => setFile(e.target.files[0])}
               style={{ display: "none" }}
             />
+            {addButton && (
+              <div className="flex gap-[25px] ml-[10px] h-[36px] justify-between items-center">
+               
+                
              <label htmlFor="image">
              <svg  width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="0.5" y="0.5" width="35" height="35" rx="17.5" stroke="#2ECC71" />
@@ -159,12 +197,12 @@ const WritePage = () => {
             }
               
 
-              <textarea className="mt-12 bg-transparent w-full h-full outline-none text-[24px] placeholder:text-[24px] font-montserrat font-normal  " placeholder="Tell your story........"></textarea>
+              <textarea value={value} onChange={(e) => setValue(e.target.value)} className="mt-12 bg-transparent w-full h-full outline-none text-[24px] placeholder:text-[24px] font-montserrat font-normal  " placeholder="Tell your story........"></textarea>
 
           </div>
 
           <div className=" flex justify-end" >
-            <button onClick={()=> handleSubmit()} className="text-neutral-100 text-xl font-medium font-montserrat leading-[25px] w-[229px] mt-4 h-[45px] px-[30px] py-2.5 bg-green-500 bg-opacity-30 rounded-[20px]  gap-2.5 self-center tracking-tight">Share Your Story</button>
+            <button disabled={handleButtonDisabled()} onClick={()=> handleSubmit()} className="text-neutral-100 text-xl font-medium font-montserrat leading-[25px] w-[229px] mt-4 h-[45px] px-[30px] py-2.5 bg-green-500 disabled:bg-opacity-30 rounded-[20px]  gap-2.5 self-center tracking-tight">Share Your Story</button>
           </div>
         </div>
       </div>
@@ -175,6 +213,8 @@ const WritePage = () => {
             type="text"
             className=" outline-sky-950 bg-transparent placeholder:text-neutral-400 placeholder:text-[30px] text-[32px] text-[#001F3F] font-medium font-montserrat tracking-tight w-full h-[100px]  px-[38px]    py-[33px] rounded-[20px] border border-neutral-400 justify-start items-center flex"
             placeholder="Title"
+            onChange={(e) => setTitle(e.target.value)}
+            value={title}
           />
 
           <div className="w-full outline-sky-950 flex h-[428px] mt-6 p-[20px]  rounded-[20px] border gap-[10px] border-neutral-400 justify-start">
@@ -193,8 +233,15 @@ const WritePage = () => {
                 />
               </svg>
             )}
-            {addButton ? (
+            <input
+              type="file"
+              id="image"
+              onChange={(e) => setFile(e.target.files[0])}
+              style={{ display: "none" }}
+            />
+            {addButton && (
               <div className="flex gap-[25px] ml-[10px] h-[36px] justify-between items-center">
+                 <label htmlFor="image">
                 <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="0.5" y="0.5" width="35" height="35" rx="17.5" stroke="#2ECC71" />
                   <path d="M15 16C15.5523 16 16 15.5523 16 15C16 14.4477 15.5523 14 15 14C14.4477 14 14 14.4477 14 15C14 15.5523 14.4477 16 15 16Z" stroke="#2ECC71" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -205,6 +252,7 @@ const WritePage = () => {
                   />
                   <path d="M13.3333 23.9999C16.2482 20.5167 19.516 15.9227 24.3316 19.0283" stroke="#2ECC71" stroke-width="1.5" />
                 </svg>
+                </label>
                 <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="0.5" y="0.5" width="35" height="35" rx="17.5" stroke="#2ECC71" />
                   <path d="M20 24.0007H16" stroke="#2ECC71" stroke-linecap="round" stroke-linejoin="round" />
@@ -215,12 +263,11 @@ const WritePage = () => {
                   />
                 </svg>
               </div>
-            ) : (
-              <textarea className=" bg-transparent w-full h-full outline-none text-[24px] placeholder:text-[24px] font-montserrat font-normal  " placeholder="Tell your story........"></textarea>
             )}
+            <textarea className=" bg-transparent w-full h-full outline-none text-[24px] placeholder:text-[24px] font-montserrat font-normal  " value={value} onChange={(e) => setValue(e.target.value)} placeholder="Tell your story........"></textarea>
           </div>
           <div className=" flex justify-end">
-            <div className="text-neutral-100 text-xl font-medium font-montserrat leading-[25px] w-[229px] mt-4 h-[45px] px-[30px] py-2.5 bg-green-500 bg-opacity-30 rounded-[20px]  gap-2.5 self-center tracking-tight">Share Your Story</div>
+            <button disabled={handleButtonDisabled()} onClick={()=> handleSubmit()} className="text-neutral-100 text-xl font-medium font-montserrat leading-[25px] w-[229px] mt-4 h-[45px] px-[30px] py-2.5 bg-green-500 disabled:bg-opacity-30 rounded-[20px]  gap-2.5 self-center tracking-tight">Share Your Story</button>
           </div>
         </div>
       </div>
