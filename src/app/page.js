@@ -1,6 +1,6 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable react/jsx-key */
 'use client';
-import Image from "next/image";
 import Navbar from "./components/NavBar";
 import Footer from "./components/Footer";
 import { useRef } from "react";
@@ -13,8 +13,6 @@ import Explore from "./components/Explore";
 import AboutUs from "./components/AboutUs";
 import Trending from "./components/Trending";
 import People from "./components/Poeple";
-import Business from "./components/Business";
-import Inn from "./components/Inn";
 import Place from "./components/Place";
 
 
@@ -24,6 +22,8 @@ export default function Main() {
   const about = useRef(null);
   const spotlight = useRef(null);
   const contact = useRef(null);
+  
+
 
   const scrollToSection = (elementRef) => {
     window.scrollTo({
@@ -31,6 +31,8 @@ export default function Main() {
       behavior: "smooth",
     });
   };
+
+
 
   return (
     <>
@@ -79,7 +81,7 @@ export default function Main() {
       </div>
       {/* Space Nav Page */}
       <div className="w-full    mt-12  flex-col justify-start items-center flex">
-      <Section>{[<TopArticles />, <Trending />, <People />, <Business />, <Inn />, <Place />]}</Section>
+      <Section>{[<TopArticles />, <Trending />, <People />, <Place />]}</Section>
       <div className="w-full   flex-col justify-start items-center flex" ref={spotlight}>
           <Individuals />
         </div>

@@ -1,6 +1,32 @@
-import React from "react";
+import React, {  useState }  from "react";
+import {  db } from '../../../firebase/config';
+import { collection, query, where, doc, setDoc, getDocs, } from "firebase/firestore";
 function Footer() {
   const date = new Date().getFullYear();
+  const [email, setEmail] = useState("");
+  
+  const handleEmailSubmit = async () => {
+    try {
+      const querySnapshot = await getDocs(query(collection(db, "newsletter"), where("email", "==", email)));
+
+      if (!querySnapshot.empty) {
+        alert("This email is alreday subscribed to our NewsLetter");
+        return;
+      }
+
+      const newEmail = {
+        email: email,
+      };
+
+      await setDoc(doc(db, "newsletter", email ), newEmail);
+
+      setEmail('');
+      alert('You Have Successfully Subcribed to our NewsLetter 🎉');
+    }catch (error) {
+      console.error("Error Subcribing: ", error);
+      alert("Error Subcribing Please try again later.");
+    }
+  };
 
   return (
     <>
@@ -119,9 +145,9 @@ function Footer() {
                   <h2 className=" font-montserrat font-semibold text-[24px] tracking-[1px] text-[#f5f5f5] ">Subscribe Now</h2>
                   <p className=" leading-[25px] font-roboto font-normal text-[14px] text-[#B4B4B4] ">Stay informed and inspired with our newsletter. Join us for a journey of discovery, celebrating the best of our community. Subscribe now! </p>
                 </div>
-                <input className=" h-[47px] w-full bg-[#f5f5f5] placeholder:text-[#939393] placeholder:text-[14px] font-montserrat font-normal outline-[#001F3F] rounded-[20px] px-[25px] " placeholder="Enter Email" type="email" />
+                <input onChange={(e) => setEmail(e.target.value)} value={email} className=" h-[47px] w-full bg-[#f5f5f5] placeholder:text-[#939393] placeholder:text-[14px] font-montserrat font-normal outline-[#001F3F] rounded-[20px] px-[25px] " placeholder="Enter Email" type="email" />
               </div>
-              <button className=" h-[45px] w-full bg-[#2ECC71] text-[16px] text-[#001F3F] font-montserrat font-medium flex justify-center items-center  rounded-[20px]  ">Subscribe</button>
+              <button onClick={handleEmailSubmit} className=" h-[45px] w-full bg-[#2ECC71] text-[16px] text-[#001F3F] font-montserrat font-medium flex justify-center items-center  rounded-[20px]  ">Subscribe</button>
             </div>
           </div>
           <div className=" tracking-[0.9px] text-[14px] font-roboto font-[300] text-[#f5f5f5]">
