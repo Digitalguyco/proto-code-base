@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { db } from '../../../firebase/config';
-import { collection, query, getDocs, where } from "firebase/firestore";
+import { collection, query, getDocs, where, doc, updateDoc, increment } from "firebase/firestore";
 import Link from "next/link";
 import AddComment from "../utils/Addcomment";
 import ViewComment from "../utils/ViewComment";
@@ -24,7 +24,15 @@ function Post({params}) {
       }
     };
 
+    const incrementViewCount = async () => {
+      const postRef = doc(db, 'posts', params.slug);
+      await updateDoc(postRef, {
+        views: increment(1),
+      });
+    };
+
     fetchPostData();
+    incrementViewCount();
   }, [params.slug]);
 
   if (!post) {
@@ -213,8 +221,8 @@ function Post({params}) {
         </div>
       </div>
       <Footer />
-      {viewComments && <ViewComment viewComments={viewComments} setViewComments={setViewComments} />}
-      {addComments && <AddComment addComments={addComments} setAddComments={setAddComments} />}
+      {viewComments && <ViewComment viewComments={viewComments} setViewComments={setViewComments} postSlug={params.slug} comments={post.comments} />}
+      {/* {addComments && <AddComment addComments={addComments} setAddComments={setAddComments} />} */}
     </>
   );
 }
