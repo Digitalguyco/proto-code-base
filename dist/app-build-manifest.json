@@ -11,10 +11,15 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/posts/[slug]/page": [
+    "/c89ovt/yh789rf/admin/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/posts/[slug]/page.js"
+      "static/chunks/app/c89ovt/yh789rf/admin/page.js"
+    ],
+    "/c89ovt/yh789rf/admin/contentform/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/c89ovt/yh789rf/admin/contentform/page.js"
     ],
     "/not-found": [
       "static/chunks/webpack.js",

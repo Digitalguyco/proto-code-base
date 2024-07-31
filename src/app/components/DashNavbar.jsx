@@ -1,6 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 
 import Image from "next/image";
 import Logo from '../../../public/logo.svg';
+import avatar from '../../../public/Images/Avatar.png';
 
 
 // http://localhost:3000/c89ovt/yh789rf/admin
@@ -37,35 +39,26 @@ const DashNavBar= ({setPage, page}) => {
 
 
         {/* end */}
-        <div className="w-[280px] h-[197px] px-4 pb-8 flex-col justify-start items-start gap-6 inline-flex ">
-    <div className="self-stretch h-[76px] py-2.5 justify-between items-start inline-flex">
-        <div className="grow shrink basis-0 self-stretch px-3 py-2 bg-sky-950 rounded-md justify-start items-center gap-[105px] flex">
-            <div className="justify-start items-center gap-3 flex">
-                <div className="w-6 h-6 pl-[2.31px] pr-[2.19px] py-0.5 justify-center items-center flex">
-                    <div className="w-[19.50px] h-5 relative">
-                    </div>
-                </div>
-                <div className="text-neutral-100 text-base font-medium font-['Montserrat'] leading-normal">Settings</div>
+        <div className="flex mt-[150px]  gap-[24px] py-[32px] px-[16px] justify-between items-center flex-col">
+          <div className=" w-[248px] px-[12px] py-[15px] h-[40px] flex justify-between items-center rounded-[6px]  ">
+            <div className="flex w-full h-full items-center gap-[12px] justify-start">
+              <img src={avatar} alt="User" />
+              <div className="flex flex-col justify-between items-start">
+                <span className="text-[14px] text-[#fff] font-montserrat font-medium leading-[20px] ">Olivia Rhye</span>
+                <span className="text-[14px] text-[#939393] font-roboto font-normal leading-[20px] ">olivia@untitledui.com</span>
+              </div>
             </div>
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M15.5 25.5H12.1667C11.7246 25.5 11.3007 25.3244 10.9882 25.0118C10.6756 24.6993 10.5 24.2754 10.5 23.8333V12.1667C10.5 11.7246 10.6756 11.3007 10.9882 10.9882C11.3007 10.6756 11.7246 10.5 12.1667 10.5H15.5M21.3333 22.1667L25.5 18M25.5 18L21.3333 13.8333M25.5 18H15.5"
+                stroke="#F5F5F5"
+                stroke-width="1.67"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
         </div>
-    </div>
-    <div className="self-stretch px-2 justify-between items-center inline-flex">
-        <div className="justify-start items-center gap-3 flex">
-            <img className="w-10 h-10 rounded-[200px]" src="https://via.placeholder.com/40x40" />
-            <div className="flex-col justify-start items-start inline-flex">
-                <div className="text-white text-sm font-medium font-['Montserrat'] leading-tight">Olivia Rhye</div>
-                <div className="text-neutral-400 text-sm font-normal font-['Roboto'] leading-tight">olivia@untitledui.com</div>
-            </div>
-        </div>
-        <div className="justify-center items-center flex">
-            <div className="rounded-lg justify-start items-start inline-flex">
-                <div className="p-2 rounded-lg justify-center items-center gap-2 flex">
-                    <div className="w-5 h-5 relative" />
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
     </div>
     )
 };
